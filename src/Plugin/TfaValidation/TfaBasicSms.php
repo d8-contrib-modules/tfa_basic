@@ -25,14 +25,12 @@ class TfaBasicSms extends TfaBasePlugin implements TfaValidationInterface, TfaSe
     if (!empty($context['validate_context']) && !empty($context['validate_context']['code'])) {
       $this->code = $context['validate_context']['code'];
     }
-    $sid = variable_get('tfa_basic_twilio_account_sid', '');
-    $token = variable_get('tfa_basic_twilio_account_token', '');
+    $sid = \Drupal::config('tfa_basic.settings')->get('twilio_account_sid');
+    $token = \Drupal::config('tfa_basic.settings')->get('twilio_account_token');
     $this->client = new Services_Twilio($sid, $token);
-    $this->twilioNumber = variable_get('tfa_basic_twilio_account_number', '');
+    $this->twilioNumber = \Drupal::config('tfa_basic.settings')->get('twilio_account_number');
     $this->codeLength = 6;
-    $this->messageText = variable_get('tfa_basic_twilio_message_text',
-      'Verification code: !code');
-
+    $this->messageText = \Drupal::config('tfa_basic.settings')->get('twilio_message_text');
     $this->mobileNumber = $mobile_number;
     if (!empty($context['mobile_number'])) {
       $this->mobileNumber = $context['mobile_number'];
@@ -51,7 +49,7 @@ class TfaBasicSms extends TfaBasePlugin implements TfaValidationInterface, TfaSe
     }
   }
 
-  public function getForm(array $form, array &$form_state) {
+  public function getForm(array $form, FormStateInterface $form_state) {
     $form['code'] = array(
       '#type' => 'textfield',
       '#title' => t('Verification Code'),
@@ -74,7 +72,7 @@ class TfaBasicSms extends TfaBasePlugin implements TfaValidationInterface, TfaSe
     return $form;
   }
 
-  public function validateForm(array $form, array &$form_state) {
+  public function validateForm(array $form, FormStateInterface $form_state) {
     // If operation is resend then do not attempt to validate code.
     if ($form_state['values']['op'] === $form_state['values']['resend']) {
       return TRUE;
@@ -88,7 +86,7 @@ class TfaBasicSms extends TfaBasePlugin implements TfaValidationInterface, TfaSe
     }
   }
 
-  public function submitForm(array $form, array &$form_state) {
+  public function submitForm(array $form, FormStateInterface $form_state) {
     // Resend code if pushed.
     if ($form_state['values']['op'] === $form_state['values']['resend']) {
       $this->code = $this->generate();
