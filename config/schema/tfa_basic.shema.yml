@@ -31,6 +31,15 @@ tfa_basic.settings:
     twilio_account_token:
       type: string
       label: 'Private Twilio account token from twilio.com.'
+    twilio_account_number:
+      type: integer
+      label: 'Private Twilio account number from twilio.com.'
+    twilio_message_text:
+      type: string
+      label: 'Text to be sent to the user. Use @code for the verification code'
     phone_field:
       type: string
       label: 'Phone field.'
+    help_text:
+      type: string
+      label: 'Text to display on help page. Plain text only.'

@@ -7,4 +7,7 @@ cookie_name: 'TB'
 cookie_domain: ''
 twilio_account_sid: ''
 twilio_account_token: ''
+twilio_account_number: 0
+twilio_message_text: 'Verification code: @code'
 phone_field: ''
+help_text: 'Contact support to reset your access'
