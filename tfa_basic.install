@@ -5,6 +5,34 @@
  */
 function tfa_basic_schema() {
 
+  $schema['tfa_user_settings'] = array(
+    'fields' => array(
+      'uid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'saved' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'status' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'data' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+    ),
+    'primary key' => array('uid'),
+  );
+
   $schema['tfa_totp_seed'] = array(
     'fields' => array(
       'uid' => array(
@@ -29,7 +57,7 @@ function tfa_basic_schema() {
     'primary key' => array('uid'),
   );
 
-  $schema['tfa_trusted_device'] = array(
+  $schema['tfa_trusted_browser'] = array(
     'fields' => array(
       'did' => array(
         'type' => 'serial',
@@ -53,6 +81,11 @@ function tfa_basic_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
+      'last_used' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
       'ip' => array(
         'type' => 'varchar',
         'length' => 60,
@@ -68,9 +101,90 @@ function tfa_basic_schema() {
     ),
     'primary key' => array('did'),
     'indexes' => array(
-      'device' => array('uid', 'value'),
+      'browser' => array('uid', 'value'),
+    ),
+  );
+
+  $schema['tfa_recovery_code'] = array(
+    'fields' => array(
+      'id' => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'uid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'code' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'Base 64 encoded encrypted code',
+      ),
+      'created' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'used' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('id'),
+    'indexes' => array(
+      'uid' => array('uid'),
+    ),
+  );
+
+  $schema['tfa_accepted_code'] = array(
+    'fields' => array(
+      'cid' => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'uid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'code_hash' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => '',
+      ),
+      'time_accepted' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('cid'),
+    'indexes' => array(
+      'uid_code' => array('uid', 'code_hash'),
+      'time_accepted' => array('time_accepted'),
     ),
   );
 
   return $schema;
+}
+
+/**
+ * Implements hook_install().
+ */
+function tfa_basic_install() {
+  // Set default values.
+  \Drupal::configFactory()->getEditable('tfa_basic.settings')
+    ->set('secret_key', \Drupal::service('private_key')->get())
+    ->set('name_prefix', \Drupal::config('system.site')->get('name'))
+    ->save();
 }

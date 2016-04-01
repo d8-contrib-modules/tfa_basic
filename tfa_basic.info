@@ -1,9 +1,0 @@
-name = "TFA Basic Plugins"
-description = "TFA plugin for Time-based One Time Passwords and Trusted Devices"
-core = 7.x
-
-dependencies[] = tfa
-
-files[] = includes/tfa_totp.inc
-files[] = includes/tfa_trusted_device.inc
-files[] = includes/googleauthenticator/GoogleAuthenticator.php

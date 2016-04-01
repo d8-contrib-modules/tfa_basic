@@ -1,0 +1,22 @@
+tfa_basic.tfa:
+  path: 'user/{user}/security/tfa'
+  defaults:
+    _form: 'Drupal\tfa_basic\Form\BasicOverview'
+    _title: 'Security'
+  requirements:
+    _permission: 'setup own tfa'
+tfa_basic.tfa.tfa_basic_setup:
+  path: 'user/{user}/security/tfa/app-setup'
+  defaults:
+    _form: 'Drupal\tfa_basic\Form\BasicSetup'
+    _title: 'TFA setup'
+  requirements:
+    _permission: 'setup own tfa'
+tfa_basic.tfa.disable:
+  path: 'user/{user}/security/tfa/disable'
+  defaults:
+    _form: 'Drupal\tfa_basic\Form\BasicDisable'
+    _title: 'TFA disable'
+  requirements:
+    _permission: 'setup own tfa'
+    user: \d+
