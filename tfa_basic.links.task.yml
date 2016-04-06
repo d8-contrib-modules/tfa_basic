@@ -1,4 +1,5 @@
 tfa_basic.tfa:
   route_name: tfa_basic.tfa
   base_route: entity.user.canonical
+  weight: 9
   title: 'Security'
