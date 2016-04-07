@@ -72,7 +72,7 @@ class BasicSetup extends FormBase {
         '#type' => 'submit',
         '#value' => t('Cancel'),
         '#limit_validation_errors' => array(),
-        '#submit' => array('::submitForm'),
+        '#submit' => array('::cancelForm'),
       );
     }
     else {
@@ -153,7 +153,7 @@ class BasicSetup extends FormBase {
                 '#type' => 'submit',
                 '#value' => t('Disable SMS delivery'),
                 '#limit_validation_errors' => array(),
-                '#submit' => array('::submitForm'),
+                '#submit' => array('::cancelForm'),
               );
             }
           }
@@ -202,7 +202,7 @@ class BasicSetup extends FormBase {
           '#type' => 'submit',
           '#value' => $count > 0 ? t('Skip') : t('Skip and finish'),
           '#limit_validation_errors' => array(),
-          '#submit' => array('::submitForm'),
+          '#submit' => array('::cancelForm'),
         );
       }
       // Provide cancel button on first step or single steps.
@@ -211,7 +211,7 @@ class BasicSetup extends FormBase {
           '#type' => 'submit',
           '#value' => t('Cancel'),
           '#limit_validation_errors' => array(),
-          '#submit' => array('::submitForm'),
+          '#submit' => array('::cancelForm'),
         );
       }
       // Record the method in progress regardless of whether in full setup.
@@ -271,6 +271,15 @@ class BasicSetup extends FormBase {
       }
     }
   }
+  
+  /**
+   * {@inheritdoc}
+   */
+  public function cancelForm(array &$form, FormStateInterface $form_state) {
+    $account = $form['account']['#value'];
+    drupal_set_message('TFA setup canceled.', 'warning');
+    $form_state->setRedirect('tfa_basic.tfa', ['user' => $account->id()]);
+  }
 
   /**
    * {@inheritdoc}
@@ -280,12 +289,6 @@ class BasicSetup extends FormBase {
     $storage = $form_state->getStorage();
     $values = $form_state->getValues();
 
-    // Cancel button.
-    if (isset($values['cancel']) && $values['op'] === $values['cancel']) {
-      drupal_set_message('TFA setup canceled.', 'warning');
-      $form_state->setRedirect('tfa_basic.tfa', ['user' => $account->id()]);
-      return;
-    }
     // Password validation.
     if (isset($values['current_pass'])) {
       $storage['pass_confirmed'] = TRUE;
