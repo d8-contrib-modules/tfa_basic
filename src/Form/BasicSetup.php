@@ -9,6 +9,7 @@ namespace Drupal\tfa_basic\Form;
 
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Link;
 use Drupal\Core\Url;
 use Drupal\tfa\TfaSetup;
 use Drupal\tfa_basic\Plugin\TfaSetup\TfaTotpSetup;
@@ -71,7 +72,7 @@ class BasicSetup extends FormBase {
         '#type' => 'submit',
         '#value' => t('Cancel'),
         '#limit_validation_errors' => array(),
-        '#submit' => array('tfa_basic_setup_form_submit'),
+        '#submit' => array('::cancelForm'),
       );
     }
     else {
@@ -135,6 +136,7 @@ class BasicSetup extends FormBase {
               '#description' => t('Enter your mobile phone number that can receive SMS codes. A code will be sent to this number for validation.'),
               '#default_value' => $default_number ?: '',
             );
+            //@todo what is this? looks like it should be user specific
             $phone_field = variable_get('tfa_basic_phone_field', '');
             if (!empty($phone_field)) {
               // Report that this is an account field.
@@ -151,7 +153,7 @@ class BasicSetup extends FormBase {
                 '#type' => 'submit',
                 '#value' => t('Disable SMS delivery'),
                 '#limit_validation_errors' => array(),
-                '#submit' => array('tfa_basic_setup_form_submit'),
+                '#submit' => array('::cancelForm'),
               );
             }
           }
@@ -177,8 +179,12 @@ class BasicSetup extends FormBase {
           $recovery = new TfaBasicRecoveryCodeSetup(array('uid' => $account->id()));
           $codes = $recovery->getCodes();
 
-          $output = theme('item_list', array('items' => $codes));
-          $output .= l(t('Return to account TFA overview'), 'user/' . $account->id() . '/security/tfa');
+          $output = ['#theme' => 'item_list', '#items' => $codes];
+          $output = \Drupal::service('renderer')->render($output);
+          $output .= Link::fromTextAndUrl(t('Return to account TFA overview'),
+            Url::fromRoute('tfa_basic.tfa', ['user' => $account->id()]))
+            ->toString();
+
           $form['output'] = array(
             '#type' => 'markup',
             '#markup' => $output,
@@ -196,7 +202,7 @@ class BasicSetup extends FormBase {
           '#type' => 'submit',
           '#value' => $count > 0 ? t('Skip') : t('Skip and finish'),
           '#limit_validation_errors' => array(),
-          '#submit' => array('tfa_basic_setup_form_submit'),
+          '#submit' => array('::cancelForm'),
         );
       }
       // Provide cancel button on first step or single steps.
@@ -205,7 +211,7 @@ class BasicSetup extends FormBase {
           '#type' => 'submit',
           '#value' => t('Cancel'),
           '#limit_validation_errors' => array(),
-          '#submit' => array('tfa_basic_setup_form_submit'),
+          '#submit' => array('::cancelForm'),
         );
       }
       // Record the method in progress regardless of whether in full setup.
@@ -242,9 +248,6 @@ class BasicSetup extends FormBase {
 //      }
       return;
     }
-    elseif (isset($values['cancel']) && $values['op'] === $values['cancel']) {
-      return;
-    }
     // Handle first step of SMS setup.
     elseif (isset($values['sms_number'])) {
       // Validate number.
@@ -252,7 +255,7 @@ class BasicSetup extends FormBase {
       $number_errors = tfa_basic_valid_number($number);
       if (!empty($number_errors)) {
         foreach ($number_errors as $error) {
-          form_set_error('number', $error);
+          $form_state->setErrorByName('number', $error);
         }
       }
       return;
@@ -264,10 +267,18 @@ class BasicSetup extends FormBase {
       if (!$tfa_setup->validateForm($form, $form_state)) {
         foreach ($tfa_setup->getErrorMessages() as $element => $message) {
           $form_state->setErrorByName($element, $message);
-//          form_set_error($element, $message);
         }
       }
     }
+  }
+  
+  /**
+   * {@inheritdoc}
+   */
+  public function cancelForm(array &$form, FormStateInterface $form_state) {
+    $account = $form['account']['#value'];
+    drupal_set_message('TFA setup canceled.', 'warning');
+    $form_state->setRedirect('tfa_basic.tfa', ['user' => $account->id()]);
   }
 
   /**
@@ -278,13 +289,6 @@ class BasicSetup extends FormBase {
     $storage = $form_state->getStorage();
     $values = $form_state->getValues();
 
-    // Cancel button.
-    if (isset($values['cancel']) && $values['op'] === $values['cancel']) {
-      drupal_set_message('TFA setup canceled.');
-      $form_state['redirect'] = 'user/' . $account->id() . '/security/tfa';
-//      $form_state->setRedirectUrl()
-      return;
-    }
     // Password validation.
     if (isset($values['current_pass'])) {
       $storage['pass_confirmed'] = TRUE;
@@ -303,7 +307,7 @@ class BasicSetup extends FormBase {
       $errors = $tfa_setup->getErrorMessages();
       if (!empty($errors)) {
         foreach ($errors as $error) {
-          form_set_error('number', $error);
+          $form_state->setErrorByName('number', $error);
         }
       }
       else {
@@ -319,10 +323,10 @@ class BasicSetup extends FormBase {
       tfa_basic_setup_save_data($account, array('sms' => FALSE));
       drupal_set_message(t('TFA SMS delivery disabled.'));
       $form_state['redirect'] = 'user/' . $account->id() . '/security/tfa';
-      watchdog('tfa_basic', 'TFA SMS disabled for user @name UID !uid', array(
+      \Drupal::logger('tfa_basic')->info('TFA SMS disabled for user @name UID @uid', array(
         '@name' => $account->name,
-        '!uid' => $account->id(),
-      ), WATCHDOG_INFO);
+        '@uid' => $account->id(),
+      ));
       return;
     }
     // Submitting a plugin form.
@@ -347,7 +351,7 @@ class BasicSetup extends FormBase {
         $setup_class = $storage[$method];
         if (!$setup_class->submitForm($form, $form_state)) {
           drupal_set_message(t('There was an error during TFA setup. Your settings have not been saved.'), 'error');
-          $form_state['redirect'] = 'user/' . $account->id() . '/security/tfa';
+          $form_state->setRedirect('tfa_basic.tfa', ['user' => $account->id()]);
           return;
         }
       }
@@ -370,7 +374,7 @@ class BasicSetup extends FormBase {
       }
       // Else, setup complete and return to overview page.
       drupal_set_message(t('TFA setup complete.'));
-      $form_state->setRedirectUrl(Url::fromUserInput('/user/' . $account->id() . '/security/tfa')); // @todo
+      $form_state->setRedirect('tfa_basic.tfa', ['user' => $account->id()]);
 
       // Log and notify if this was full setup.
       if (!empty($storage['full_setup'])) {
@@ -378,13 +382,15 @@ class BasicSetup extends FormBase {
           'plugins' => array_diff($storage['steps'], $storage['steps_skipped']),
         );
         tfa_basic_setup_save_data($account, $data);
-        // @todo
-//        $params = array('account' => $account);
-//        drupal_mail('tfa_basic', 'tfa_basic_tfa_enabled', $account->mail, user_preferred_language($account), $params);
-//        watchdog('tfa_basic', 'TFA enabled for user @name UID !uid', array(
-//          '@name' => $account->name,
-//          '!uid' => $account->id(),
-//        ), WATCHDOG_INFO);
+        \Drupal::logger('tfa_basic')->info('TFA enabled for user @name UID @uid',
+          array(
+            '@name' => $account->getUsername(),
+            '@uid' => $account->id(),
+          ));
+
+        //@todo Not working, not sure why though.
+        $params = array('account' => $account);
+        \Drupal::service('plugin.manager.mail')->mail('tfa_basic', 'tfa_basic_tfa_enabled', $account->getEmail(), $account->getPreferredLangcode(), $params);
       }
     }
   }
@@ -445,7 +451,7 @@ class BasicSetup extends FormBase {
           break;
       }
       $count = count($storage['steps_left']);
-      $output .= ' ' . format_plural($count, 'One setup step remaining.', '@count TFA setup steps remain.', array('@count' => $count));
+      $output .= ' ' . \Drupal::translation()->formatPlural($count, 'One setup step remaining.', '@count TFA setup steps remain.', array('@count' => $count));
       if ($output) {
         drupal_set_message($output);
       }

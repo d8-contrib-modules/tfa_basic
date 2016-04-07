@@ -4,7 +4,7 @@ namespace Drupal\tfa_basic\Plugin\TfaSetup;
 
 use Drupal\Component\Utility\Html;
 use Drupal\tfa\Plugin\TfaSetupInterface;
-use Drupal\tfa_basic\Plugin\TfaValidation\TfaTrustedBrowser;
+use Drupal\tfa_basic\Plugin\TfaLogin\TfaTrustedBrowser;
 use Drupal\Core\Url;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\user\Entity\User;

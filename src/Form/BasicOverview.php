@@ -38,14 +38,15 @@ class BasicOverview extends FormBase {
     $enabled = isset($user_tfa['status']) && $user_tfa['status'] ? TRUE : FALSE;
 
     if (!empty($user_tfa)) {
+      $date_formatter = \Drupal::service('date.formatter');
       if ($enabled) {
-        $status_text = t('Status: <strong>TFA enabled</strong>, set !time. <a href="!url">Disable TFA</a>', array(
-          '!time' => format_date($user_tfa['saved']),
-          '!url' => URL::fromRoute('tfa_basic.tfa.disable', ['user' => $user->id()])->toString()
+        $status_text = t('Status: <strong>TFA enabled</strong>, set @time. <a href=":url">Disable TFA</a>', array(
+          '@time' => $date_formatter->format($user_tfa['saved']),
+          ':url' => URL::fromRoute('tfa_basic.tfa.disable', ['user' => $user->id()])->toString()
         ));
       }
       else {
-        $status_text = t('Status: <strong>TFA disabled</strong>, set !time.', array('!time' => format_date($user_tfa['saved'])));
+        $status_text = t('Status: <strong>TFA disabled</strong>, set @time.', array('@time' => $date_formatter->format($user_tfa['saved'])));
       }
       $output['status'] = array(
         '#type' => 'markup',
@@ -109,7 +110,7 @@ class BasicOverview extends FormBase {
             '#links' => array(
               'admin' => array(
                 'title' => !$enabled ? t('Set up application') : t('Reset application'),
-                'url' => Url::fromUri('base:user/' . $account->id() . '/security/tfa/app-setup'),
+                'url' => Url::fromRoute('tfa_basic.tfa.tfa_basic_setup', ['user' => $account->id()])
               ),
             ),
           ),

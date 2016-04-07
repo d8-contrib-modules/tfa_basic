@@ -135,16 +135,15 @@ class BasicDisable extends FormBase {
     $trusted = new TfaTrustedBrowserSetup(array('uid' => $account->id()));
     $trusted->deleteTrustedBrowsers();
 
-    // @todo
-//    watchdog('tfa_basic', 'TFA disabled for user @name UID !uid', array(
-//      '@name' => $account->getUsername(),
-//      '!uid' => $account->id(),
-//    ), WATCHDOG_NOTICE);
+    \Drupal::logger('tfa_basic')->notice('TFA disabled for user @name UID @uid', array(
+      '@name' => $account->getUsername(),
+      '@uid' => $account->id(),
+    ));
 
-    // @todo
-    // E-mail account to inform user that it has been disabled.
-//    $params = array('account' => $account);
-//    drupal_mail('tfa_basic', 'tfa_basic_disabled_configuration', $account->getEmail(), user_preferred_language($account), $params);
+    //@todo Not working, not sure why though.
+    //E-mail account to inform user that it has been disabled.
+    $params = array('account' => $account);
+    \Drupal::service('plugin.manager.mail')->mail('tfa_basic', 'tfa_basic_disabled_configuration', $account->getEmail(), $account->getPreferredLangcode(), $params);
 
     drupal_set_message(t('TFA has been disabled.'));
     $form_state->setRedirect('tfa_basic.tfa', ['user' => $account->id()]);
