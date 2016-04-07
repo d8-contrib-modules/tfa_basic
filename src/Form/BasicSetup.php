@@ -71,7 +71,7 @@ class BasicSetup extends FormBase {
         '#type' => 'submit',
         '#value' => t('Cancel'),
         '#limit_validation_errors' => array(),
-        '#submit' => array('tfa_basic_setup_form_submit'),
+        '#submit' => array('::submitForm'),
       );
     }
     else {
@@ -205,7 +205,7 @@ class BasicSetup extends FormBase {
           '#type' => 'submit',
           '#value' => t('Cancel'),
           '#limit_validation_errors' => array(),
-          '#submit' => array('tfa_basic_setup_form_submit'),
+          '#submit' => array('::submitForm'),
         );
       }
       // Record the method in progress regardless of whether in full setup.
@@ -240,9 +240,6 @@ class BasicSetup extends FormBase {
 //      if (!$current_pass) {
 //        form_set_error('current_pass', t("Incorrect password."));
 //      }
-      return;
-    }
-    elseif (isset($values['cancel']) && $values['op'] === $values['cancel']) {
       return;
     }
     // Handle first step of SMS setup.
@@ -280,8 +277,8 @@ class BasicSetup extends FormBase {
 
     // Cancel button.
     if (isset($values['cancel']) && $values['op'] === $values['cancel']) {
-      drupal_set_message('TFA setup canceled.');
-      $form_state['redirect'] = 'user/' . $account->id() . '/security/tfa';
+      drupal_set_message('TFA setup canceled.', 'warning');
+      $form_state->setRedirect('tfa_basic.tfa', ['user' => $account->id()]);
 //      $form_state->setRedirectUrl()
       return;
     }
@@ -347,7 +344,7 @@ class BasicSetup extends FormBase {
         $setup_class = $storage[$method];
         if (!$setup_class->submitForm($form, $form_state)) {
           drupal_set_message(t('There was an error during TFA setup. Your settings have not been saved.'), 'error');
-          $form_state['redirect'] = 'user/' . $account->id() . '/security/tfa';
+          $form_state->setRedirect('tfa_basic.tfa', ['user' => $account->id()]);
           return;
         }
       }
@@ -370,7 +367,7 @@ class BasicSetup extends FormBase {
       }
       // Else, setup complete and return to overview page.
       drupal_set_message(t('TFA setup complete.'));
-      $form_state->setRedirectUrl(Url::fromUserInput('/user/' . $account->id() . '/security/tfa')); // @todo
+      $form_state->setRedirect('tfa_basic.tfa', ['user' => $account->id()]);
 
       // Log and notify if this was full setup.
       if (!empty($storage['full_setup'])) {

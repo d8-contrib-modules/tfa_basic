@@ -381,8 +381,6 @@ function tfa_basic_setup_save_data($account, $data = array()) {
     'status' => $status,
     'data' => json_encode($tfa_data),
   );
-  print_r($record); // @todo
-  var_dump($existing);  // @todo
   if (!empty($existing)) {
 //    drupal_write_record('tfa_user_settings', $record, 'uid');
     \Drupal::database()->update('tfa_user_settings')
