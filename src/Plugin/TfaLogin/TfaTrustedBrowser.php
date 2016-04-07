@@ -84,7 +84,7 @@ class TfaTrustedBrowser extends TfaBasePlugin implements TfaLoginInterface {
   /**
    * @copydoc TfaBasePlugin::submitForm()
    */
-  public function submitForm(array $form, FormStateInterface $form_state) {
+  public function submitForm(array $form, FormStateInterface &$form_state) {
     $trust_browser = $form_state->getValue('trust_browser');
     if (!empty($trust_browser)) {
       $this->trustBrowser = TRUE;
