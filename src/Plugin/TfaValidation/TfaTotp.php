@@ -45,8 +45,8 @@ class TfaTotp extends TfaBasePlugin implements TfaValidationInterface {
   /**
    * @copydoc TfaBasePlugin::__construct()
    */
-  public function __construct(array $context) {
-    parent::__construct($context);
+  public function __construct(array $context, array $configuration, $plugin_id, $plugin_definition) {
+    parent::__construct($context, $configuration, $plugin_id, $plugin_definition);
     $this->ga = new GoogleAuthenticator();
     // Allow codes within tolerance range of 3 * 30 second units.
     $this->timeSkew = \Drupal::config('tfa_basic.settings')->get('time_skew');
