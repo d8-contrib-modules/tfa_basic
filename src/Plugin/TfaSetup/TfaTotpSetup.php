@@ -13,7 +13,13 @@ use Drupal\user\Entity\User;
  * @TfaSetup(
  *   id = "tfa_basic_totp_setup",
  *   label = @Translation("TFA Toptp Setup"),
- *   description = @Translation("TFA Toptp Setup Plugin")
+ *   description = @Translation("TFA Toptp Setup Plugin"),
+ *   help_links = {
+ *    "Google Authenticator (Android/iPhone/BlackBerry)" = "https://support.google.com/accounts/answer/1066447?hl=en",
+ *    "Authy (Android/iPhone)" = "https://www.authy.com/thefuture#install-now",
+ *    "FreeOTP (Android)" = "https://play.google.com/store/apps/details?id=org.fedorahosted.freeotp",
+ *    "GAuth Authenticator (desktop)" = "https://github.com/gbraad/html5-google-authenticator"
+ *   }
  * )
  */
 class TfaTotpSetup extends TfaTotp implements TfaSetupInterface {
@@ -31,8 +37,8 @@ class TfaTotpSetup extends TfaTotp implements TfaSetupInterface {
   /**
    * @copydoc TfaBasePlugin::__construct()
    */
-  public function __construct(array $context) {
-    parent::__construct($context);
+  public function __construct(array $context, array $configuration, $plugin_id, $plugin_definition) {
+    parent::__construct($context, $configuration, $plugin_id, $plugin_definition);
     // Generate seed.
     $this->seed = $this->createSeed();
     $this->namePrefix = \Drupal::config('tfa_basic.settings')->get('name_prefix');
@@ -42,13 +48,11 @@ class TfaTotpSetup extends TfaTotp implements TfaSetupInterface {
    * @copydoc TfaSetupPluginInterface::getSetupForm()
    */
   public function getSetupForm(array $form, FormStateInterface &$form_state) {
-    $items = [
-      Link::fromTextAndUrl('Google Authenticator (Android/iPhone/BlackBerry)', Url::fromUri('https://support.google.com/accounts/answer/1066447?hl=en', array('attributes' => array('target'=>'_blank')))),
-      Link::fromTextAndUrl('Authy (Android/iPhone)', Url::fromUri('https://www.authy.com/thefuture#install-now', array('attributes' => array('target'=>'_blank')))),
-      Link::fromTextAndUrl('Authenticator (Windows Phone)', Url::fromUri('http://www.windowsphone.com/en-us/store/app/authenticator/021dd79f-0598-e011-986b-78e7d1fa76f8', array('attributes' => array('target'=>'_blank')))),
-      Link::fromTextAndUrl('FreeOTP (Android)', Url::fromUri('https://play.google.com/store/apps/details?id=org.fedorahosted.freeotp', array('attributes' => array('target'=>'_blank')))),
-      Link::fromTextAndUrl('GAuth Authenticator (desktop)', Url::fromUri('https://github.com/gbraad/html5-google-authenticator', array('attributes' => array('target'=>'_blank'))))
-    ];
+    $help_links = $this->getHelpLinks();
+
+    foreach($help_links as $item => $link)
+      $items[] = Link::fromTextAndUrl($item, Url::fromUri($link, ['attributes' => ['target'=>'_blank']]));
+
     $markup = ['#theme' => 'item_list', '#items' => $items, '#title' => t('Install authentication code application on your mobile or desktop device:')];
     $form['apps'] = array(
       '#type' => 'markup',
@@ -182,4 +186,7 @@ class TfaTotpSetup extends TfaTotp implements TfaSetupInterface {
     return urlencode($this->namePrefix . '-' . $account->getUsername());
   }
 
+  public function getHelpLinks(){
+    return $this->pluginDefinition['help_links'];
+  }
 }

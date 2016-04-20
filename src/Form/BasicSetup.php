@@ -7,20 +7,36 @@
 
 namespace Drupal\tfa_basic\Form;
 
+use Drupal\Component\Plugin\PluginManagerInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Link;
 use Drupal\Core\Url;
 use Drupal\tfa\TfaSetup;
+use Drupal\tfa\TfaSetupPluginManager;
 use Drupal\tfa_basic\Plugin\TfaSetup\TfaTotpSetup;
 use Drupal\user\Entity\User;
 use Drupal\tfa_basic\Plugin\TfaSetup\TfaBasicRecoveryCodeSetup;
 use Drupal\tfa_basic\Plugin\TfaSetup\TfaTrustedBrowserSetup;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * TFA setup form router.
  */
 class BasicSetup extends FormBase {
+
+  /**
+   * @var \Drupal\Component\Plugin\PluginManagerInterface
+   */
+  protected $manager;
+
+  public static function create(ContainerInterface $container) {
+    return new static($container->get('plugin.manager.tfa.setup'));
+  }
+
+  function __construct(PluginManagerInterface $manager) {
+    $this->manager = $manager;
+  }
 
   /**
    * {@inheritdoc}
@@ -33,7 +49,7 @@ class BasicSetup extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state, User $user = NULL, $method = 'tfa_basic_totp') {
-
+    $plugin_definitions = $this->manager->getDefinitions();
     $account = User::load(\Drupal::currentUser()->id());
 
     $form['account'] = array(
@@ -92,10 +108,16 @@ class BasicSetup extends FormBase {
       // Record methods progressed.
       $storage['steps'][] = $method;
       $context = array('uid' => $account->id());
+      $plugin_definition =  $plugin_definitions[$method . '_setup'];
       switch ($method) {
         case 'tfa_basic_totp':
           $form['#title'] = t('TFA setup - Application');
-          $setup_plugin = new TfaTotpSetup($context);
+          $setup_plugin = new TfaTotpSetup(
+            $context,
+            [], //@todo what comes under configuration?
+            $plugin_definition['id'],
+            $plugin_definition
+          );
           $tfa_setup = new TfaSetup($setup_plugin, $context);
 
           if (!empty($tfa_data)) {
@@ -109,6 +131,7 @@ class BasicSetup extends FormBase {
           break;
 
         case 'tfa_basic_trusted_browser':
+          $context['setup_context'] = ['plugin_definition' => $plugin_definition];
           $form['#title'] = t('TFA setup - Trusted browsers');
           $setup_plugin = new TfaTrustedBrowserSetup($context);
           $tfa_setup = new TfaSetup($setup_plugin, $context);
@@ -125,6 +148,7 @@ class BasicSetup extends FormBase {
           break;
 
         case 'tfa_basic_sms':
+          $context['setup_context'] = ['plugin_definition' => $plugin_definition];
           $form['#title'] = t('TFA setup - SMS');
           // SMS itself has multiple steps. Begin with phone number entry.
           if (empty($storage[$method])) {
