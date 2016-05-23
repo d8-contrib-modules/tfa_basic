@@ -40,20 +40,18 @@ class TfaTotp extends TfaBasePlugin implements TfaValidationInterface {
    */
   protected $alreadyAccepted;
 
-  protected $context;
 
   /**
    * @copydoc TfaBasePlugin::__construct()
    */
-  public function __construct(array $context, array $configuration, $plugin_id, $plugin_definition) {
-    parent::__construct($context, $configuration, $plugin_id, $plugin_definition);
+  public function __construct(array $configuration, $plugin_id, $plugin_definition) {
+    parent::__construct($configuration, $plugin_id, $plugin_definition);
     $this->ga = new GoogleAuthenticator();
     // Allow codes within tolerance range of 3 * 30 second units.
     $this->timeSkew = \Drupal::config('tfa_basic.settings')->get('time_skew');
     // Recommended: set variable tfa_totp_secret_key in settings.php.
     $this->encryptionKey = \Drupal::config('tfa_basic.settings')->get('secret_key');
     $this->alreadyAccepted = FALSE;
-    $this->context = $context;
   }
 
   /**
@@ -177,7 +175,7 @@ class TfaTotp extends TfaBasePlugin implements TfaValidationInterface {
    */
   public function deleteSeed() {
     $query = db_delete('tfa_totp_seed')
-      ->condition('uid', $this->context['uid']);
+      ->condition('uid', \Drupal::currentUser()->id());
 
     return $query->execute();
   }
