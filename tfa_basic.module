@@ -35,7 +35,7 @@ function tfa_basic_menu() {
   $items['user/%user/security/tfa/recovery-codes'] = array(
     'title' => 'TFA setup',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('tfa_basic_setup_form', 1, 'tfa_basic_recovery_code'),
+    'page arguments' => array('tfa_basic_setup_form', 1, 'tfa_recovery_code'),
     'access callback' => 'tfa_basic_setup_access',
     'access arguments' => array(1, 'setup own tfa'),
     'type' => MENU_CALLBACK,
@@ -103,7 +103,7 @@ function tfa_basic_cron() {
  */
 function tfa_basic_tfa_api() {
   return array(
-    'tfa_basic_totp' => array(
+    'tfa_totp' => array(
       'class' => 'TfaTotp',
       'name' => 'TOTP',
     ),
@@ -111,7 +111,7 @@ function tfa_basic_tfa_api() {
       'class' => 'TfaTrustedBrowser',
       'name' => 'Trusted Browsers',
     ),
-    'tfa_basic_recovery_code' => array(
+    'tfa_recovery_code' => array(
       'class' => 'TfaBasicRecoveryCode',
       'name' => 'Recovery Codes',
     ),
@@ -132,7 +132,7 @@ function tfa_basic_tfa_api() {
  * @param array $context
  * @return TfaTotp
  */
-function tfa_basic_totp_create($context) {
+function tfa_totp_create($context) {
   return new TfaTotp($context);
 }
 
@@ -152,7 +152,7 @@ function tfa_basic_trusted_browser_create($context) {
  * @param array $context
  * @return TfaBasicRecoveryCode
  */
-function tfa_basic_recovery_code_create($context) {
+function tfa_recovery_code_create($context) {
   return new TfaBasicRecoveryCode($context);
 }
 
@@ -345,7 +345,7 @@ function tfa_basic_get_tfa_data($uid) {
  * @param array $data TFA data
  * @code
  *   array(
- *     'plugins' => ['tfa_basic_totp'],
+ *     'plugins' => ['tfa_totp'],
  *     'sms' => FALSE,
  *     'status' => TRUE,
  *   )

@@ -48,7 +48,7 @@ class BasicSetup extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, User $user = NULL, $method = 'tfa_basic_totp') {
+  public function buildForm(array $form, FormStateInterface $form_state, User $user = NULL, $method = 'tfa_totp') {
     $plugin_definitions = $this->manager->getDefinitions();
     $account = User::load(\Drupal::currentUser()->id());
 
@@ -110,7 +110,7 @@ class BasicSetup extends FormBase {
       $context = array('uid' => $account->id());
       $plugin_definition =  $plugin_definitions[$method . '_setup'];
       switch ($method) {
-        case 'tfa_basic_totp':
+        case 'tfa_totp':
           $form['#title'] = t('TFA setup - Application');
           $setup_plugin = new TfaTotpSetup(
             $context,
@@ -139,7 +139,7 @@ class BasicSetup extends FormBase {
           $storage[$method] = $tfa_setup;
           break;
 
-        case 'tfa_basic_recovery_code':
+        case 'tfa_recovery_code':
           $form['#title'] = t('TFA setup - Recovery codes');
           $setup_plugin = new TfaBasicRecoveryCodeSetup($context);
           $tfa_setup = new TfaSetup($setup_plugin, $context);
@@ -425,10 +425,10 @@ class BasicSetup extends FormBase {
   private function _tfa_basic_full_setup_steps() {
     $steps = array();
     $plugins = array(
-      'tfa_basic_totp',
+      'tfa_totp',
       'tfa_basic_sms',
       'tfa_basic_trusted_browser',
-      'tfa_basic_recovery_code',
+      'tfa_recovery_code',
     );
     $config = \Drupal::config('tfa_basic.settings');
     foreach ($plugins as $plugin) {
@@ -452,7 +452,7 @@ class BasicSetup extends FormBase {
       // Contextual reporting.
       $output = FALSE;
       switch ($this_step) {
-        case 'tfa_basic_totp':
+        case 'tfa_totp':
           $output = $skipped_step ? t('Application codes not enabled.') : t('Application code verified.');
           break;
 
@@ -470,7 +470,7 @@ class BasicSetup extends FormBase {
           }
           break;
 
-        case 'tfa_basic_recovery_code':
+        case 'tfa_recovery_code':
           $output = $skipped_step ? t('Recovery codes not saved.') : t('Saved recovery codes.');
           break;
       }

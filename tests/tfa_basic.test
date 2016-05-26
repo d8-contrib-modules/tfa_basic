@@ -67,8 +67,8 @@ class TfaBasicTestCase extends DrupalWebTestCase {
 
     // Enable TFA and begin configuration.
     variable_set('tfa_enabled', TRUE);
-    variable_set('tfa_validate_plugin', 'tfa_basic_totp');
-    variable_set('tfa_fallback_plugins', array('tfa_basic_recovery_code'));
+    variable_set('tfa_validate_plugin', 'tfa_totp');
+    variable_set('tfa_fallback_plugins', array('tfa_recovery_code'));
 
     $this->drupalGet('user/' . $account->uid . '/security/tfa');
 
@@ -204,7 +204,7 @@ class TfaBasicTestCase extends DrupalWebTestCase {
 
   public function testTotpReplay() {
     variable_set('tfa_enabled', TRUE);
-    variable_set('tfa_validate_plugin', 'tfa_basic_totp');
+    variable_set('tfa_validate_plugin', 'tfa_totp');
     $account = $this->drupalCreateUser(array('access content', 'setup own tfa'));
     $edit = array(
       'name' => $account->name,
@@ -277,7 +277,7 @@ class TfaBasicTestCase extends DrupalWebTestCase {
 
   public function testRequired() {
     variable_set('tfa_enabled', TRUE);
-    variable_set('tfa_validate_plugin', 'tfa_basic_totp');
+    variable_set('tfa_validate_plugin', 'tfa_totp');
     $account = $this->drupalCreateUser(array('access content', 'setup own tfa'));
     $edit = array(
       'name' => $account->name,
