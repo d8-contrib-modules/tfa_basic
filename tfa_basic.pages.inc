@@ -6,7 +6,7 @@
  * @param stdClass $account
  * @return string
  */
-function tfa_basic_recovery_codes_list($account) {
+function tfa_recovery_codes_list($account) {
   $recovery = new TfaBasicRecoveryCodeSetup(array('uid' => $account->uid));
   $codes = $recovery->getCodes();
 

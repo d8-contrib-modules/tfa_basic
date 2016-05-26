@@ -4,14 +4,14 @@ namespace Drupal\tfa_basic\Plugin\TfaSetup;
 
 use Drupal\Core\Link;
 use Drupal\tfa\Plugin\TfaSetupInterface;
-use Drupal\tfa_basic\Plugin\TfaValidation\TfaTotp;
+use Drupal\tfa\Plugin\TfaValidation\TfaTotp;
 use Drupal\Core\Url;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\user\Entity\User;
 
 /**
  * @TfaSetup(
- *   id = "tfa_basic_totp_setup",
+ *   id = "tfa_totp_setup",
  *   label = @Translation("TFA Toptp Setup"),
  *   description = @Translation("TFA Toptp Setup Plugin"),
  *   help_links = {

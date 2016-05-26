@@ -10,7 +10,7 @@ use Drupal\user\Entity\User;
 
 /**
  * @TfaSetup(
- *   id = "tfa_basic_recovery_code_setup",
+ *   id = "tfa_recovery_code_setup",
  *   label = @Translation("TFA Recovery Code Setup"),
  *   description = @Translation("TFA Recovery Code Setup Plugin")
  * )

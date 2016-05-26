@@ -60,13 +60,13 @@ class BasicOverview extends FormBase {
     }
     else {
       // TOTP setup.
-      $output['app'] = $this->tfa_basic_plugin_setup_form_overview('tfa_basic_totp', $user, $user_tfa);
+      $output['app'] = $this->tfa_basic_plugin_setup_form_overview('tfa_totp', $user, $user_tfa);
       // SMS setup.
       $output['sms'] = $this->tfa_basic_plugin_setup_form_overview('tfa_basic_sms', $user, $user_tfa);
       // Trusted browsers.
       $output['trust'] = $this->tfa_basic_plugin_setup_form_overview('tfa_basic_trusted_browser', $user, $user_tfa);
       // Recovery codes.
-      $output['recovery'] = $this->tfa_basic_plugin_setup_form_overview('tfa_basic_recovery_code', $user, $user_tfa);
+      $output['recovery'] = $this->tfa_basic_plugin_setup_form_overview('tfa_recovery_code', $user, $user_tfa);
     }
 
 
@@ -93,7 +93,7 @@ class BasicOverview extends FormBase {
     $enabled = isset($user_tfa['status']) && $user_tfa['status'] ? TRUE : FALSE;
     $output = array();
     switch ($plugin) {
-      case 'tfa_basic_totp';
+      case 'tfa_totp';
         $output = array(
           'heading' => array(
             '#type' => 'html_tag',
@@ -119,7 +119,7 @@ class BasicOverview extends FormBase {
 
       case 'tfa_basic_sms':
       case 'tfa_basic_trusted_browser':
-      case 'tfa_basic_recovery_code':
+      case 'tfa_recovery_code':
 
         break;
 

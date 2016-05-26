@@ -11,7 +11,7 @@ use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
 use Drupal\tfa\TfaSetup;
-use Drupal\tfa_basic\Plugin\TfaValidation\TfaTotp;
+use Drupal\tfa\Plugin\TfaValidation\TfaTotp;
 use Drupal\user\Entity\User;
 use Drupal\tfa_basic\Plugin\TfaSetup\TfaBasicRecoveryCodeSetup;
 use Drupal\tfa_basic\Plugin\TfaSetup\TfaTrustedBrowserSetup;
