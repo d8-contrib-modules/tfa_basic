@@ -112,7 +112,7 @@ function tfa_basic_tfa_api() {
       'name' => 'Trusted Browsers',
     ),
     'tfa_recovery_code' => array(
-      'class' => 'TfaBasicRecoveryCode',
+      'class' => 'TfaRecoveryCode',
       'name' => 'Recovery Codes',
     ),
     'tfa_basic_sms' => array(
@@ -153,7 +153,7 @@ function tfa_basic_trusted_browser_create($context) {
  * @return TfaBasicRecoveryCode
  */
 function tfa_recovery_code_create($context) {
-  return new TfaBasicRecoveryCode($context);
+  return new TfaRecoveryCode($context);
 }
 
 /**
