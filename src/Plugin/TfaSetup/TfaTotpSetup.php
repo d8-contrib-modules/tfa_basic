@@ -12,8 +12,8 @@ use Drupal\user\Entity\User;
 /**
  * @TfaSetup(
  *   id = "tfa_totp_setup",
- *   label = @Translation("TFA Toptp Setup"),
- *   description = @Translation("TFA Toptp Setup Plugin"),
+ *   label = @Translation("TFA Totp Setup"),
+ *   description = @Translation("TFA Totp Setup Plugin"),
  *   help_links = {
  *    "Google Authenticator (Android/iPhone/BlackBerry)" = "https://support.google.com/accounts/answer/1066447?hl=en",
  *    "Authy (Android/iPhone)" = "https://www.authy.com/thefuture#install-now",

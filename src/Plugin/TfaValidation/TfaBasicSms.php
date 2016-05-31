@@ -8,7 +8,7 @@ use Drupal\Core\Form\FormStateInterface;
 /**
  * @TfaValidation(
  *   id = "tfa_basic_sms",
- *   label = @Translation("TFA SMS Validation"),
+ *   label = @Translation("TFA SMS"),
  *   description = @Translation("TFA SMS Validation Plugin")
  * )
  */

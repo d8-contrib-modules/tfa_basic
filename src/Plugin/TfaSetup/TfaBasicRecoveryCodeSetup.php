@@ -3,7 +3,7 @@
 namespace Drupal\tfa_basic\Plugin\TfaSetup;
 
 use Drupal\tfa\Plugin\TfaSetupInterface;
-use Drupal\tfa_basic\Plugin\TfaValidation\TfaBasicRecoveryCode;
+use Drupal\tfa\Plugin\TfaValidation\TfaRecoveryCode;
 use Drupal\Core\Url;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\user\Entity\User;
@@ -15,7 +15,7 @@ use Drupal\user\Entity\User;
  *   description = @Translation("TFA Recovery Code Setup Plugin")
  * )
  */
-class TfaBasicRecoveryCodeSetup extends TfaBasicRecoveryCode implements TfaSetupInterface {
+class TfaBasicRecoveryCodeSetup extends TfaRecoveryCode implements TfaSetupInterface {
 
   /**
    * @var int
