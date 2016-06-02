@@ -70,4 +70,12 @@ class TfaBasicSmsSetup extends TfaBasicSms implements TfaSetupInterface {
     return TRUE;
   }
 
+  /**
+   * Get list of helper links for the plugin
+   *
+   * @return array List of helper links
+   */
+  public function getHelpLinks(){
+    return $this->pluginDefinition['help_links'];
+  }
 }

@@ -149,4 +149,13 @@ class TfaBasicRecoveryCodeSetup extends TfaRecoveryCode implements TfaSetupInter
     }
     watchdog('tfa_basic', $message, array('!uid' => $this->context['uid'], '!del' => $num_deleted), WATCHDOG_INFO);
   }
+
+  /**
+   * Get list of helper links for the plugin
+   *
+   * @return array List of helper links
+   */
+  public function getHelpLinks(){
+    return $this->pluginDefinition['help_links'];
+  }
 }
