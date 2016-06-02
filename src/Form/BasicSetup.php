@@ -113,12 +113,11 @@ class BasicSetup extends FormBase {
         case 'tfa_totp':
           $form['#title'] = t('TFA setup - Application');
           $setup_plugin = new TfaTotpSetup(
-            $context,
-            [], //@todo what comes under configuration?
+            ['uid' => $account->id()], //@todo what comes under configuration?
             $plugin_definition['id'],
             $plugin_definition
           );
-          $tfa_setup = new TfaSetup($setup_plugin, $context);
+          $tfa_setup = new TfaSetup($setup_plugin);
 
           if (!empty($tfa_data)) {
             $form['disclaimer'] = array(
@@ -134,7 +133,7 @@ class BasicSetup extends FormBase {
           $context['setup_context'] = ['plugin_definition' => $plugin_definition];
           $form['#title'] = t('TFA setup - Trusted browsers');
           $setup_plugin = new TfaTrustedBrowserSetup($context);
-          $tfa_setup = new TfaSetup($setup_plugin, $context);
+          $tfa_setup = new TfaSetup($setup_plugin);
           $form = $tfa_setup->getForm($form, $form_state);
           $storage[$method] = $tfa_setup;
           break;
@@ -142,7 +141,7 @@ class BasicSetup extends FormBase {
         case 'tfa_recovery_code':
           $form['#title'] = t('TFA setup - Recovery codes');
           $setup_plugin = new TfaBasicRecoveryCodeSetup($context);
-          $tfa_setup = new TfaSetup($setup_plugin, $context);
+          $tfa_setup = new TfaSetup($setup_plugin);
           $form = $tfa_setup->getForm($form, $form_state);
           $storage[$method] = $tfa_setup;
           break;

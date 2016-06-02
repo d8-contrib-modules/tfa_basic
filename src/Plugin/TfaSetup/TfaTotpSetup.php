@@ -2,6 +2,7 @@
 
 namespace Drupal\tfa_basic\Plugin\TfaSetup;
 
+use Base32\Base32;
 use Drupal\Core\Link;
 use Drupal\tfa\Plugin\TfaSetupInterface;
 use Drupal\tfa\Plugin\TfaValidation\TfaTotp;
@@ -37,8 +38,8 @@ class TfaTotpSetup extends TfaTotp implements TfaSetupInterface {
   /**
    * @copydoc TfaBasePlugin::__construct()
    */
-  public function __construct(array $context, array $configuration, $plugin_id, $plugin_definition) {
-    parent::__construct($context, $configuration, $plugin_id, $plugin_definition);
+  public function __construct(array $configuration, $plugin_id, $plugin_definition) {
+    parent::__construct($configuration, $plugin_id, $plugin_definition);
     // Generate seed.
     $this->seed = $this->createSeed();
     $this->namePrefix = \Drupal::config('tfa_basic.settings')->get('name_prefix');
@@ -111,7 +112,7 @@ class TfaTotpSetup extends TfaTotp implements TfaSetupInterface {
    * @copydoc TfaBasePlugin::validate()
    */
   protected function validate($code) {
-    return $this->ga->verifyCode($this->seed, $code, $this->timeSkew);
+    return $this->auth->otp->checkTotp(Base32::decode($this->seed), $code, $this->timeSkew);
   }
 
   /**
@@ -133,7 +134,7 @@ class TfaTotpSetup extends TfaTotp implements TfaSetupInterface {
     // Note, this URL is over https but does leak the seed and account
     // email address to Google. See README.txt for local QR code generation
     // using qrcode.js.
-    return $this->ga->getQRCodeGoogleUrl($this->accountName(), $seed);
+    return $this->auth->ga->getQrCodeUrl('totp', $this->accountName(), $seed);
   }
 
   /**
@@ -142,7 +143,7 @@ class TfaTotpSetup extends TfaTotp implements TfaSetupInterface {
    * @return string Seed.
    */
   protected function createSeed() {
-    return $this->ga->createSecret();
+    return $this->auth->ga->generateRandom();
   }
 
   /**
@@ -153,10 +154,10 @@ class TfaTotpSetup extends TfaTotp implements TfaSetupInterface {
   protected function storeSeed($seed) {
     // Encrypt seed for storage.
     $encrypted = $this->encrypt($seed);
-    // Data is binary so store base64 encoded.
+
     $record = array(
-      'uid' => $this->context['uid'],
-      'seed' => base64_encode($encrypted),
+      'uid' => $this->configuration['uid'],
+      'seed' => Base32::encode($encrypted),
       'created' => REQUEST_TIME
     );
 
@@ -182,11 +183,17 @@ class TfaTotpSetup extends TfaTotp implements TfaSetupInterface {
    */
   protected function accountName() {
     /** @var User $account */
-    $account =  User::load($this->context['uid']);
+    $account =  User::load($this->configuration['uid']);
     return urlencode($this->namePrefix . '-' . $account->getUsername());
   }
 
+  /**
+   * Get list of helper links for the plugin
+   *
+   * @return array List of helper links
+   */
   public function getHelpLinks(){
     return $this->pluginDefinition['help_links'];
   }
+
 }

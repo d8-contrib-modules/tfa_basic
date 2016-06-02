@@ -177,4 +177,13 @@ class TfaTrustedBrowserSetup extends TfaTrustedBrowser implements TfaSetupInterf
   public function deleteTrustedBrowsers() {
     return $this->deleteTrusted();
   }
+
+  /**
+   * Get list of helper links for the plugin
+   *
+   * @return array List of helper links
+   */
+  public function getHelpLinks(){
+    return $this->pluginDefinition['help_links'];
+  }
 }
