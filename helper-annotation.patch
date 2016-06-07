@@ -1,0 +1,158 @@
+diff --git a/src/Form/BasicSetup.php b/src/Form/BasicSetup.php
+index 8f00947..4eb2f06 100644
+--- a/src/Form/BasicSetup.php
++++ b/src/Form/BasicSetup.php
+@@ -7,15 +7,18 @@
+ 
+ namespace Drupal\tfa_basic\Form;
+ 
++use Drupal\Component\Plugin\PluginManagerInterface;
+ use Drupal\Core\Form\FormBase;
+ use Drupal\Core\Form\FormStateInterface;
+ use Drupal\Core\Link;
+ use Drupal\Core\Url;
+ use Drupal\tfa\TfaSetup;
++use Drupal\tfa\TfaSetupPluginManager;
+ use Drupal\tfa_basic\Plugin\TfaSetup\TfaTotpSetup;
+ use Drupal\user\Entity\User;
+ use Drupal\tfa_basic\Plugin\TfaSetup\TfaBasicRecoveryCodeSetup;
+ use Drupal\tfa_basic\Plugin\TfaSetup\TfaTrustedBrowserSetup;
++use Symfony\Component\DependencyInjection\ContainerInterface;
+ 
+ /**
+  * TFA setup form router.
+@@ -23,6 +26,19 @@ use Drupal\tfa_basic\Plugin\TfaSetup\TfaTrustedBrowserSetup;
+ class BasicSetup extends FormBase {
+ 
+   /**
++   * @var \Drupal\Component\Plugin\PluginManagerInterface
++   */
++  protected $manager;
++
++  public static function create(ContainerInterface $container) {
++    return new static($container->get('plugin.manager.tfa.setup'));
++  }
++
++  function __construct(PluginManagerInterface $manager) {
++    $this->manager = $manager;
++  }
++
++  /**
+    * {@inheritdoc}
+    */
+   public function getFormId() {
+@@ -33,7 +49,7 @@ class BasicSetup extends FormBase {
+    * {@inheritdoc}
+    */
+   public function buildForm(array $form, FormStateInterface $form_state, User $user = NULL, $method = 'tfa_basic_totp') {
+-
++    $plugin_definitions = $this->manager->getDefinitions();
+     $account = User::load(\Drupal::currentUser()->id());
+ 
+     $form['account'] = array(
+@@ -92,10 +108,16 @@ class BasicSetup extends FormBase {
+       // Record methods progressed.
+       $storage['steps'][] = $method;
+       $context = array('uid' => $account->id());
++      $plugin_definition =  $plugin_definitions[$method . '_setup'];
+       switch ($method) {
+         case 'tfa_basic_totp':
+           $form['#title'] = t('TFA setup - Application');
+-          $setup_plugin = new TfaTotpSetup($context);
++          $setup_plugin = new TfaTotpSetup(
++            $context,
++            [], //@todo what comes under configuration?
++            $plugin_definition['id'],
++            $plugin_definition
++          );
+           $tfa_setup = new TfaSetup($setup_plugin, $context);
+ 
+           if (!empty($tfa_data)) {
+@@ -109,6 +131,7 @@ class BasicSetup extends FormBase {
+           break;
+ 
+         case 'tfa_basic_trusted_browser':
++          $context['setup_context'] = ['plugin_definition' => $plugin_definition];
+           $form['#title'] = t('TFA setup - Trusted browsers');
+           $setup_plugin = new TfaTrustedBrowserSetup($context);
+           $tfa_setup = new TfaSetup($setup_plugin, $context);
+@@ -125,6 +148,7 @@ class BasicSetup extends FormBase {
+           break;
+ 
+         case 'tfa_basic_sms':
++          $context['setup_context'] = ['plugin_definition' => $plugin_definition];
+           $form['#title'] = t('TFA setup - SMS');
+           // SMS itself has multiple steps. Begin with phone number entry.
+           if (empty($storage[$method])) {
+diff --git a/src/Plugin/TfaSetup/TfaTotpSetup.php b/src/Plugin/TfaSetup/TfaTotpSetup.php
+index 9d3e8f9..3c229f2 100644
+--- a/src/Plugin/TfaSetup/TfaTotpSetup.php
++++ b/src/Plugin/TfaSetup/TfaTotpSetup.php
+@@ -13,7 +13,13 @@ use Drupal\user\Entity\User;
+  * @TfaSetup(
+  *   id = "tfa_basic_totp_setup",
+  *   label = @Translation("TFA Toptp Setup"),
+- *   description = @Translation("TFA Toptp Setup Plugin")
++ *   description = @Translation("TFA Toptp Setup Plugin"),
++ *   help_links = {
++ *    "Google Authenticator (Android/iPhone/BlackBerry)" = "https://support.google.com/accounts/answer/1066447?hl=en",
++ *    "Authy (Android/iPhone)" = "https://www.authy.com/thefuture#install-now",
++ *    "FreeOTP (Android)" = "https://play.google.com/store/apps/details?id=org.fedorahosted.freeotp",
++ *    "GAuth Authenticator (desktop)" = "https://github.com/gbraad/html5-google-authenticator"
++ *   }
+  * )
+  */
+ class TfaTotpSetup extends TfaTotp implements TfaSetupInterface {
+@@ -31,8 +37,8 @@ class TfaTotpSetup extends TfaTotp implements TfaSetupInterface {
+   /**
+    * @copydoc TfaBasePlugin::__construct()
+    */
+-  public function __construct(array $context) {
+-    parent::__construct($context);
++  public function __construct(array $context, array $configuration, $plugin_id, $plugin_definition) {
++    parent::__construct($context, $configuration, $plugin_id, $plugin_definition);
+     // Generate seed.
+     $this->seed = $this->createSeed();
+     $this->namePrefix = \Drupal::config('tfa_basic.settings')->get('name_prefix');
+@@ -42,13 +48,11 @@ class TfaTotpSetup extends TfaTotp implements TfaSetupInterface {
+    * @copydoc TfaSetupPluginInterface::getSetupForm()
+    */
+   public function getSetupForm(array $form, FormStateInterface &$form_state) {
+-    $items = [
+-      Link::fromTextAndUrl('Google Authenticator (Android/iPhone/BlackBerry)', Url::fromUri('https://support.google.com/accounts/answer/1066447?hl=en', array('attributes' => array('target'=>'_blank')))),
+-      Link::fromTextAndUrl('Authy (Android/iPhone)', Url::fromUri('https://www.authy.com/thefuture#install-now', array('attributes' => array('target'=>'_blank')))),
+-      Link::fromTextAndUrl('Authenticator (Windows Phone)', Url::fromUri('http://www.windowsphone.com/en-us/store/app/authenticator/021dd79f-0598-e011-986b-78e7d1fa76f8', array('attributes' => array('target'=>'_blank')))),
+-      Link::fromTextAndUrl('FreeOTP (Android)', Url::fromUri('https://play.google.com/store/apps/details?id=org.fedorahosted.freeotp', array('attributes' => array('target'=>'_blank')))),
+-      Link::fromTextAndUrl('GAuth Authenticator (desktop)', Url::fromUri('https://github.com/gbraad/html5-google-authenticator', array('attributes' => array('target'=>'_blank'))))
+-    ];
++    $help_links = $this->getHelpLinks();
++
++    foreach($help_links as $item => $link)
++      $items[] = Link::fromTextAndUrl($item, Url::fromUri($link, ['attributes' => ['target'=>'_blank']]));
++
+     $markup = ['#theme' => 'item_list', '#items' => $items, '#title' => t('Install authentication code application on your mobile or desktop device:')];
+     $form['apps'] = array(
+       '#type' => 'markup',
+@@ -182,4 +186,7 @@ class TfaTotpSetup extends TfaTotp implements TfaSetupInterface {
+     return urlencode($this->namePrefix . '-' . $account->getUsername());
+   }
+ 
++  public function getHelpLinks(){
++    return $this->pluginDefinition['help_links'];
++  }
+ }
+diff --git a/src/Plugin/TfaValidation/TfaTotp.php b/src/Plugin/TfaValidation/TfaTotp.php
+index 6d2f15a..372ce16 100644
+--- a/src/Plugin/TfaValidation/TfaTotp.php
++++ b/src/Plugin/TfaValidation/TfaTotp.php
+@@ -45,8 +45,8 @@ class TfaTotp extends TfaBasePlugin implements TfaValidationInterface {
+   /**
+    * @copydoc TfaBasePlugin::__construct()
+    */
+-  public function __construct(array $context) {
+-    parent::__construct($context);
++  public function __construct(array $context, array $configuration, $plugin_id, $plugin_definition) {
++    parent::__construct($context, $configuration, $plugin_id, $plugin_definition);
+     $this->ga = new GoogleAuthenticator();
+     // Allow codes within tolerance range of 3 * 30 second units.
+     $this->timeSkew = \Drupal::config('tfa_basic.settings')->get('time_skew');

@@ -12,30 +12,43 @@ use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Link;
 use Drupal\Core\Url;
+use Drupal\ga_login\Plugin\TfaSetup\TfaHotpSetup;
 use Drupal\tfa\TfaSetup;
 use Drupal\tfa\TfaSetupPluginManager;
-use Drupal\tfa_basic\Plugin\TfaSetup\TfaTotpSetup;
+use Drupal\ga_login\Plugin\TfaSetup\TfaTotpSetup;
 use Drupal\user\Entity\User;
 use Drupal\tfa_basic\Plugin\TfaSetup\TfaBasicRecoveryCodeSetup;
 use Drupal\tfa_basic\Plugin\TfaSetup\TfaTrustedBrowserSetup;
+use Drupal\user\UserDataInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+
 
 /**
  * TFA setup form router.
  */
 class BasicSetup extends FormBase {
-
   /**
    * @var \Drupal\Component\Plugin\PluginManagerInterface
    */
   protected $manager;
 
+  /**
+   * Provides the user data service object.
+   *
+   * @var \Drupal\user\UserDataInterface
+   */
+  protected $userData;
+
   public static function create(ContainerInterface $container) {
-    return new static($container->get('plugin.manager.tfa.setup'));
+    return new static(
+      $container->get('plugin.manager.tfa.setup'),
+      $container->get('user.data')
+    );
   }
 
-  function __construct(PluginManagerInterface $manager) {
+  function __construct(PluginManagerInterface $manager, UserDataInterface $user_data) {
     $this->manager = $manager;
+    $this->userData =  $user_data;
   }
 
   /**
@@ -105,17 +118,39 @@ class BasicSetup extends FormBase {
       if (isset($storage['step_method'])) {
         $method = $storage['step_method'];
       }
+
+      $method = \Drupal::config('tfa.settings')->get('validate_plugin');
       // Record methods progressed.
       $storage['steps'][] = $method;
       $context = array('uid' => $account->id());
       $plugin_definition =  $plugin_definitions[$method . '_setup'];
       switch ($method) {
         case 'tfa_totp':
-          $form['#title'] = t('TFA setup - Application');
+          $form['#title'] = t('TFA TOTP setup - Application');
           $setup_plugin = new TfaTotpSetup(
             ['uid' => $account->id()], //@todo what comes under configuration?
             $plugin_definition['id'],
-            $plugin_definition
+            $plugin_definition,
+            $this->userData
+          );
+          $tfa_setup = new TfaSetup($setup_plugin);
+
+          if (!empty($tfa_data)) {
+            $form['disclaimer'] = array(
+              '#type' => 'markup',
+              '#markup' => '<p>' . t('Note: You should delete the old account in your mobile or desktop app before adding this new one.') . '</p>',
+            );
+          }
+          $form = $tfa_setup->getForm($form, $form_state);
+          $storage[$method] = $tfa_setup;
+          break;
+        case 'tfa_hotp':
+          $form['#title'] = t('TFA HOTP setup - Application');
+          $setup_plugin = new TfaHotpSetup(
+            ['uid' => $account->id()], //@todo what comes under configuration?
+            $plugin_definition['id'],
+            $plugin_definition,
+            $this->userData
           );
           $tfa_setup = new TfaSetup($setup_plugin);
 
@@ -240,7 +275,6 @@ class BasicSetup extends FormBase {
       // Record the method in progress regardless of whether in full setup.
       $storage['step_method'] = $method;
     }
-
     $form_state->setStorage($storage);
     return $form;
   }

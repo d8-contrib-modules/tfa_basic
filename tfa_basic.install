@@ -177,14 +177,3 @@ function tfa_basic_schema() {
 
   return $schema;
 }
-
-/**
- * Implements hook_install().
- */
-function tfa_basic_install() {
-  // Set default values.
-  \Drupal::configFactory()->getEditable('tfa_basic.settings')
-    ->set('secret_key', \Drupal::service('private_key')->get())
-    ->set('name_prefix', \Drupal::config('system.site')->get('name'))
-    ->save();
-}

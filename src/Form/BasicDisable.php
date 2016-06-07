@@ -7,6 +7,7 @@
 
 namespace Drupal\tfa_basic\Form;
 
+use Drupal\Component\Plugin\PluginManagerInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
@@ -15,11 +16,36 @@ use Drupal\tfa\Plugin\TfaValidation\TfaTotp;
 use Drupal\user\Entity\User;
 use Drupal\tfa_basic\Plugin\TfaSetup\TfaBasicRecoveryCodeSetup;
 use Drupal\tfa_basic\Plugin\TfaSetup\TfaTrustedBrowserSetup;
+use Drupal\user\UserDataInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * TFA setup form router.
  */
 class BasicDisable extends FormBase {
+  /**
+   * @var \Drupal\Component\Plugin\PluginManagerInterface
+   */
+  protected $manager;
+
+  /**
+   * Provides the user data service object.
+   *
+   * @var \Drupal\user\UserDataInterface
+   */
+  protected $userData;
+
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('plugin.manager.tfa.setup'),
+      $container->get('user.data')
+    );
+  }
+
+  function __construct(PluginManagerInterface $manager, UserDataInterface $user_data) {
+    $this->manager = $manager;
+    $this->userData =  $user_data;
+  }
 
   /**
    * {@inheritdoc}
@@ -114,6 +140,7 @@ class BasicDisable extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
+    $plugin_definitions = $this->manager->getDefinitions();
     $storage = $form_state->getStorage();
     $values = $form_state->getValues();
     /** @var User $account */
@@ -126,14 +153,18 @@ class BasicDisable extends FormBase {
 
     tfa_basic_setup_save_data($account, array('status' => FALSE));
     // Delete TOTP code.
-    $totp = new TfaTotp(array('uid' => $account->id()));
+    // @todo fetch the plugin id from somewhere, probably tfa configuration data
+    $plugin_definition = $plugin_definitions['tfa_totp_setup'];
+    $totp = new TfaTotp(array('uid' => $account->id()), 'tfa_totp_setup', $plugin_definition, $this->userData);
     $totp->deleteSeed();
+
+    // @todo how to handle multiple plugins? fetch enabled plugins data?
     // Delete recovery codes.
-    $recovery = new TfaBasicRecoveryCodeSetup(array('uid' => $account->id()));
-    $recovery->deleteCodes();
-    // Delete trusted browsers.
-    $trusted = new TfaTrustedBrowserSetup(array('uid' => $account->id()));
-    $trusted->deleteTrustedBrowsers();
+//    $recovery = new TfaBasicRecoveryCodeSetup(array('uid' => $account->id()));
+//    $recovery->deleteCodes();
+//    // Delete trusted browsers.
+//    $trusted = new TfaTrustedBrowserSetup(array('uid' => $account->id()));
+//    $trusted->deleteTrustedBrowsers();
 
     \Drupal::logger('tfa_basic')->notice('TFA disabled for user @name UID @uid', array(
       '@name' => $account->getUsername(),
