@@ -322,12 +322,9 @@ function _tfa_basic_form_validate($form, &$form_state) {
  * @endcode
  */
 function tfa_basic_get_tfa_data($uid) {
-  $result = db_query("SELECT status, saved, data FROM {tfa_user_settings} WHERE uid = :uid", array(':uid' => $uid))->fetchAssoc();
+  $result = \Drupal::service('user.data')->get('tfa', $uid, 'tfa_user_settings');
   if (!empty($result)) {
-    $data = array();
-    if (!empty($result['data'])) {
-      $data = json_decode($result['data'], TRUE);
-    }
+    $data = $result['data'];
     $tfa = array(
       'status' => $result['status'] == '1' ? TRUE : FALSE,
       'saved' => $result['saved'],
@@ -376,24 +373,27 @@ function tfa_basic_setup_save_data($account, $data = array()) {
   }
 
   $record = array(
-    'uid' => $account->id(),
     'saved' => REQUEST_TIME,
     'status' => $status,
-    'data' => json_encode($tfa_data),
+    'data' => $tfa_data,
   );
-  if (!empty($existing)) {
-//    drupal_write_record('tfa_user_settings', $record, 'uid');
-    \Drupal::database()->update('tfa_user_settings')
-      ->condition('uid', $record['uid'])
-      ->fields($record)
-      ->execute();
-  }
-  else {
-//    drupal_write_record('tfa_user_settings', $record);
-    \Drupal::database()->insert('tfa_user_settings')
-      ->fields($record)
-      ->execute();
-  }
+
+//  if (!empty($existing)) {
+////    drupal_write_record('tfa_user_settings', $record, 'uid');
+//    \Drupal::database()->update('tfa_user_settings')
+//      ->condition('uid', $record['uid'])
+//      ->fields($record)
+//      ->execute();
+//  }
+//  else {
+////    drupal_write_record('tfa_user_settings', $record);
+//    \Drupal::database()->insert('tfa_user_settings')
+//      ->fields($record)
+//      ->execute();
+//  }
+
+  \Drupal::service('user.data')->set('tfa', $account->id(), 'tfa_user_settings', $record);
+
 }
 
 /**
