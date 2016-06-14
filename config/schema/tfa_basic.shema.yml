@@ -4,15 +4,6 @@ tfa_basic.settings:
   type: mapping
   label: 'TFA Basic settings'
   mapping:
-    secret_key:
-      type: string
-      label: 'Secret key to to use as encryption key for TOTP seed encryption. Should be set in settings.php and not in the Drupal database.'
-    time_skew:
-      type: integer
-      label: 'Number of 30 second chunks to allow TOTP keys between.'
-    recovery_codes_amount:
-      type: integer
-      label: 'Recovery codes amount. Default is 10.'
     trust_cookie_expiration:
       type: integer
       label: 'How long before TFA cookies expire. Default is 30 days.'
@@ -34,6 +25,3 @@ tfa_basic.settings:
     phone_field:
       type: string
       label: 'Phone field.'
-    help_text:
-      type: string
-      label: 'Text to display on help page. Plain text only.'

@@ -34,6 +34,7 @@ class BasicOverview extends FormBase {
       '#markup' => '<p>' . t('Two-factor authentication (TFA) provides additional security for your account. With TFA enabled, you log in to the site with a verification code in addition to your username and password.') . '</p>',
     );
     //$form_state['storage']['account'] = $user;
+    $configuration = \Drupal::config('tfa.settings')->getRawData();
     $user_tfa = tfa_basic_get_tfa_data($user->id());
     $enabled = isset($user_tfa['status']) && $user_tfa['status'] ? TRUE : FALSE;
 
@@ -60,13 +61,22 @@ class BasicOverview extends FormBase {
     }
     else {
       // TOTP setup.
-      $output['app'] = $this->tfa_basic_plugin_setup_form_overview('tfa_totp', $user, $user_tfa);
-      // SMS setup.
-      $output['sms'] = $this->tfa_basic_plugin_setup_form_overview('tfa_basic_sms', $user, $user_tfa);
-      // Trusted browsers.
-      $output['trust'] = $this->tfa_basic_plugin_setup_form_overview('tfa_basic_trusted_browser', $user, $user_tfa);
-      // Recovery codes.
-      $output['recovery'] = $this->tfa_basic_plugin_setup_form_overview('tfa_recovery_code', $user, $user_tfa);
+//      $output['app'] = $this->tfa_basic_plugin_setup_form_overview('tfa_totp', $user, $user_tfa);
+//      // SMS setup.
+//      $output['sms'] = $this->tfa_basic_plugin_setup_form_overview('tfa_basic_sms', $user, $user_tfa);
+//      // Trusted browsers.
+//      $output['trust'] = $this->tfa_basic_plugin_setup_form_overview('tfa_basic_trusted_browser', $user, $user_tfa);
+//      // Recovery codes.
+//      $output['recovery'] = $this->tfa_basic_plugin_setup_form_overview('tfa_recovery_code', $user, $user_tfa);
+      $enabled_plugin = $configuration['validate_plugin'];
+      $enabled_fallback_plugin = key($configuration['fallback_plugins'][$enabled_plugin]);
+
+      //Validation plugin setup
+      $output['app'] = $this->tfa_basic_plugin_setup_form_overview($enabled_plugin, $user, $user_tfa);
+
+      //Fallback Setup
+      $output['recovery'] = $this->tfa_basic_plugin_setup_form_overview($enabled_fallback_plugin, $user, $user_tfa);
+
     }
 
 
@@ -93,7 +103,8 @@ class BasicOverview extends FormBase {
     $enabled = isset($user_tfa['status']) && $user_tfa['status'] ? TRUE : FALSE;
     $output = array();
     switch ($plugin) {
-      case 'tfa_totp';
+      case 'tfa_totp':
+      case 'tfa_hotp':
         $output = array(
           'heading' => array(
             '#type' => 'html_tag',
