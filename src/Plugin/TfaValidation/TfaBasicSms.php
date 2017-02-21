@@ -51,7 +51,7 @@ class TfaBasicSms extends TfaBasePlugin implements TfaValidationInterface, TfaSe
     }
   }
 
-  public function getForm(array $form, array &$form_state) {
+  public function getForm(array $form, FormStateInterface $form_state) {
     $form['code'] = array(
       '#type' => 'textfield',
       '#title' => t('Verification Code'),
@@ -74,7 +74,7 @@ class TfaBasicSms extends TfaBasePlugin implements TfaValidationInterface, TfaSe
     return $form;
   }
 
-  public function validateForm(array $form, array &$form_state) {
+  public function validateForm(array $form, FormStateInterface $form_state) {
     // If operation is resend then do not attempt to validate code.
     if ($form_state['values']['op'] === $form_state['values']['resend']) {
       return TRUE;
@@ -88,7 +88,7 @@ class TfaBasicSms extends TfaBasePlugin implements TfaValidationInterface, TfaSe
     }
   }
 
-  public function submitForm(array $form, array &$form_state) {
+  public function submitForm(array $form, FormStateInterface $form_state) {
     // Resend code if pushed.
     if ($form_state['values']['op'] === $form_state['values']['resend']) {
       $this->code = $this->generate();
