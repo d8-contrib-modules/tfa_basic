@@ -64,6 +64,26 @@ function tfa_basic_menu() {
 }
 
 /**
+ * Implements hook_menu_local_tasks_alter().
+ *
+ * Changes weight and access for the 'Security' tab on the user page.
+ */
+function tfa_basic_menu_local_tasks_alter(&$data, $route_name) {
+  if ($route_name == 'entity.user.canonical') {
+    foreach ($data['tabs'][0] as $tab_name => &$tab_data) {
+      if ($tab_name == 'tfa_basic.tfa') {
+        $link_params = $tab_data['#link']['url']->getRouteParameters();
+        $tab_data['#access'] = $link_params['user'] == \Drupal::currentUser()->id();
+        if ($tab_data['#access']) {
+          // Change tab weight to user configured.
+          $tab_data['#weight'] = \Drupal::config('tfa.settings')->get('weight');
+        }
+      }
+    }
+  }
+}
+
+/**
  * Access control.
  *
  * @param object $account
