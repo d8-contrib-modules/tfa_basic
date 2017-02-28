@@ -74,7 +74,7 @@ Prerequisites:
    a. Creating an account textfield and configuring it for TFA use, or
    b. Implementing hook_tfa_basic_get_mobile_number_alter()
 
-### Installing Twilio PHP library
+### Installing Twilio PHP library Drupal 7
 
 TFA SMS plugin requires the Twilio PHP library for sending SMS codes. To install
 the library clone it from github on the command line:
@@ -83,6 +83,12 @@ the library clone it from github on the command line:
   git clone https://github.com/twilio/twilio-php.git
 
 Such that the file tfa_basic/includes/twilio-php/Services/Twilio.php exists.
+
+### Installing Twilio PHP library Drupal 8
+
+Install drupal/sms_twillio via composer
+
+
 
 ### Account mobile phone numbers
 
